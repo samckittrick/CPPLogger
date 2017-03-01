@@ -26,12 +26,16 @@
 #include <iostream>
 #include <mutex>
 #include <sstream>
+#include <fstream>
 
-#define DEBUG 1
-#define INFO 2
+#define DEBUG 5
+#define INFO 4
 #define WARN 3
-#define ERROR 4
-#define FATAL 5
+#define ERROR 2
+#define FATAL 1
+
+#define LOGMODE_STDOUT 1
+#define LOGMODE_FILE 2
 
 class CPPLogger 
 {
@@ -51,16 +55,68 @@ class CPPLogger
  
   void writeLog(int severity, std::string message) {
     std::lock_guard<std::mutex> lockGuard(mutex);
-    if(severity >= debugLevel)
+    if(severity <= debugLevel)
       {
 	std::string time = getTimeStamp();
 	std::string severityString = getSeverityString(severity);
-	std::cout << time << ": " << severityString << " - " << message << std::endl;
+	if(logMode == LOGMODE_STDOUT)
+	  {
+	    std::cout << time << ": " << severityString << " - " << message << std::endl;
+	  }
+	else if(logMode == LOGMODE_FILE)
+	  {
+	    logFile << time << ": " << severityString << " - " << message << std::endl;
+	  } 
       }
   }
+
+  int setLogModeStdOut()
+  {
+    std::lock_guard<std::mutex> lockGuard(mutex);
+    if(logMode == LOGMODE_FILE)
+      {
+	logFile.close();
+      }
+    
+    logMode = LOGMODE_STDOUT;
+    return 0;
+  }
+
+  int setLogModeFile(std::string filePath)
+  {
+    if(filePath.empty())
+      {
+	writeLog(ERROR, "Log file path is empty");
+	return -1;
+      }
+    
+    if(logMode == LOGMODE_FILE)
+      {
+	writeLog(INFO, "New log file provided. Closing this file.");
+      }
+    
+    //We don't lock the mutex until here so that we can still write if there are any errors
+    //Otherwise we could accidentally block when writeLog waits for the mutex to be freed and this function waits to free it until after writeLog completes
+    std::lock_guard<std::mutex> lockGuard(mutex);
+    if(logMode == LOGMODE_FILE)
+      {
+	logFile.close();
+      }
+    
+    logFile.open(filePath);
+    if(logFile.fail())
+      {
+	return -1;
+      }
+
+    logMode = LOGMODE_FILE;
+  }
+    
     
  private:
-  int debugLevel = ERROR; //Default to errors 
+  int debugLevel = ERROR; //Default to errors
+  int logMode = LOGMODE_STDOUT;
+  std::ofstream logFile;
  
   //Block Constructors to ensure singleton
   CPPLogger() {}

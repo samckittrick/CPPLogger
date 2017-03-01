@@ -24,6 +24,7 @@ void threadedSendLogs()
 int main()
 {
   CPPLogger::getLog().setLogLevel(DEBUG);
+  CPPLogger::getLog().setLogModeFile("/tmp/testlog.log");
   std::cout << "All Logs\n";
   sendLogs();
   std::cout << std::endl;
