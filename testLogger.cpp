@@ -21,10 +21,10 @@ void threadedSendLogs()
     }
 }
 
-int main()
+int runTest()
 {
   CPPLogger::getLog().setLogLevel(DEBUG);
-  CPPLogger::getLog().setLogModeFile("/tmp/testlog.log");
+  
   std::cout << "All Logs\n";
   sendLogs();
   std::cout << std::endl;
@@ -57,5 +57,23 @@ int main()
   thread1.join();
   thread2.join();
 
+  return 0;
+}
+
+int main()
+{
+  std::cout << "Running log test for stdout only. " << std::endl << std::endl;
+  runTest();
+
+  std::cout << "Running test for file only. " << std::endl << std::endl;
+  CPPLogger::getLog().setLogModeFile("/tmp/testlog_fonly.log");
+  CPPLogger::getLog().unSetLogMode(LOGMODE_STDOUT);
+  runTest();
+
+  std::cout << "Running test with both stdout and file "<< std::endl << std::endl;
+  CPPLogger::getLog().setLogModeFile("/tmp/testlog_both.log");
+  CPPLogger::getLog().setLogModeStdOut();
+  runTest();
+  
   return 0;
 }

@@ -34,8 +34,8 @@
 #define ERROR 2
 #define FATAL 1
 
-#define LOGMODE_STDOUT 1
-#define LOGMODE_FILE 2
+#define LOGMODE_STDOUT 0x01
+#define LOGMODE_FILE 0x02
 
 class CPPLogger 
 {
@@ -59,11 +59,12 @@ class CPPLogger
       {
 	std::string time = getTimeStamp();
 	std::string severityString = getSeverityString(severity);
-	if(logMode == LOGMODE_STDOUT)
+	if((logMode & LOGMODE_STDOUT) == LOGMODE_STDOUT)
 	  {
 	    std::cout << time << ": " << severityString << " - " << message << std::endl;
 	  }
-	else if(logMode == LOGMODE_FILE)
+	
+	if((logMode & LOGMODE_FILE) == LOGMODE_FILE)
 	  {
 	    logFile << time << ": " << severityString << " - " << message << std::endl;
 	  } 
@@ -73,12 +74,9 @@ class CPPLogger
   int setLogModeStdOut()
   {
     std::lock_guard<std::mutex> lockGuard(mutex);
-    if(logMode == LOGMODE_FILE)
-      {
-	logFile.close();
-      }
     
-    logMode = LOGMODE_STDOUT;
+    logMode |= LOGMODE_STDOUT;
+    
     return 0;
   }
 
@@ -90,7 +88,7 @@ class CPPLogger
 	return -1;
       }
     
-    if(logMode == LOGMODE_FILE)
+    if((logMode & LOGMODE_FILE) == LOGMODE_FILE)
       {
 	writeLog(INFO, "New log file provided. Closing this file.");
       }
@@ -98,7 +96,7 @@ class CPPLogger
     //We don't lock the mutex until here so that we can still write if there are any errors
     //Otherwise we could accidentally block when writeLog waits for the mutex to be freed and this function waits to free it until after writeLog completes
     std::lock_guard<std::mutex> lockGuard(mutex);
-    if(logMode == LOGMODE_FILE)
+    if((logMode & LOGMODE_FILE) == LOGMODE_FILE)
       {
 	logFile.close();
       }
@@ -109,13 +107,19 @@ class CPPLogger
 	return -1;
       }
 
-    logMode = LOGMODE_FILE;
+    logMode |= LOGMODE_FILE;
+  }
+
+  int unSetLogMode(uint8_t mode)
+  {
+    logMode &= ~mode;
+    return 0;
   }
     
     
  private:
   int debugLevel = ERROR; //Default to errors
-  int logMode = LOGMODE_STDOUT;
+  uint8_t logMode = LOGMODE_STDOUT;
   std::ofstream logFile;
  
   //Block Constructors to ensure singleton
