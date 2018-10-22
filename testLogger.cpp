@@ -1,6 +1,16 @@
 #include "CPPLogger.h"
 #include <thread>
 #include <unistd.h>
+#include <iostream>
+
+class simpleCustomLogger : public CustomLogger
+{
+public:
+  void writeLogString(std::string message)
+  {
+    std::cout << "Custom - " << message << std::endl;
+  }
+};
 
 void sendLogs()
 {
@@ -62,6 +72,7 @@ int runTest()
 
 int main()
 {
+  /*CPPLogger::getLog().unSetLogMode(LOGMODE_STDOUT);
   std::cout << "Running log test for stdout only. " << std::endl << std::endl;
   runTest();
 
@@ -74,6 +85,13 @@ int main()
   CPPLogger::getLog().setLogModeFile("/tmp/testlog_both.log");
   CPPLogger::getLog().setLogModeStdOut();
   runTest();
+
+  */
+  CPPLogger::getLog().unSetLogMode(LOGMODE_FILE);
+  CPPLogger::getLog().unSetLogMode(LOGMODE_STDOUT);
+  CPPLogger::getLog().setLogModeCustom(new simpleCustomLogger());
+  runTest();
+  
   
   return 0;
 }

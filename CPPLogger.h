@@ -36,6 +36,16 @@
 
 #define LOGMODE_STDOUT 0x01
 #define LOGMODE_FILE 0x02
+#define LOGMODE_CUSTOM 0x04
+
+//Abstract class used as an interface to define custom logging classes.
+//These custom logging classes take a string built in CPPLogger::writeLog()
+// and print them through whatever logging mechanism they want. 
+class CustomLogger
+{
+ public:
+  virtual void writeLogString(std::string message) = 0;
+};
 
 class CPPLogger 
 {
@@ -59,15 +69,25 @@ class CPPLogger
       {
 	std::string time = getTimeStamp();
 	std::string severityString = getSeverityString(severity);
+
+	std::stringstream out;
+	out << time << ":" << severityString << "-" << message << std::endl;
+	
 	if((logMode & LOGMODE_STDOUT) == LOGMODE_STDOUT)
 	  {
-	    std::cout << time << ": " << severityString << " - " << message << std::endl;
+	    std::cout << out.str();
 	  }
 	
 	if((logMode & LOGMODE_FILE) == LOGMODE_FILE)
 	  {
-	    logFile << time << ": " << severityString << " - " << message << std::endl;
-	  } 
+	    logFile << out.str();
+	  }
+
+	if((logMode & LOGMODE_CUSTOM) == LOGMODE_CUSTOM)
+	  {
+	    if(mCustomLogger != NULL)
+	      mCustomLogger->writeLogString(out.str());
+	  }
       }
   }
 
@@ -113,14 +133,30 @@ class CPPLogger
   int unSetLogMode(uint8_t mode)
   {
     logMode &= ~mode;
+    std::cout << "Log MOde:" << logMode;
+    return 0;
+  }
+
+  //Add a custom logger to recieve and process the log messages
+  int setLogModeCustom(CustomLogger *c)
+  {
+    if(c == NULL)
+      return -1;
+    
+    mCustomLogger = c;
+
+    logMode |= LOGMODE_CUSTOM;
     return 0;
   }
     
     
  private:
   int debugLevel = ERROR; //Default to errors
-  uint8_t logMode = LOGMODE_STDOUT;
+  uint8_t logMode = LOGMODE_STDOUT; //Default log mode to stdout.
   std::ofstream logFile;
+
+  //Used to allow custom logging destinations. 
+  CustomLogger *mCustomLogger;
  
   //Block Constructors to ensure singleton
   CPPLogger() {}
