@@ -1,4 +1,4 @@
-##Super Simple C++ Logger
+## Super Simple C++ Logger
 
 This program is intended to provide simple, thread safe logging functionality. It is conatined entirely in a single header for simplicity.
 
@@ -26,7 +26,7 @@ int main()
 The purpose of the custom logger is to allow logs to be redirected to application specific purposes that wouldn't normally be included in this tool.
 Applications wishing to use this feature should extend and implement the CustomLogger class and then provide a dynamically allocated instance of the object to the CPPLogger tool.
 
-Example custom logger and usage:
+**Example custom logger and usage:**
 ```
 class simpleCustomLogger : public CustomLogger
 {
