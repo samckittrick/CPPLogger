@@ -80,7 +80,7 @@ class CPPLogger
 	
 	if((logMode & LOGMODE_FILE) == LOGMODE_FILE)
 	  {
-	    logFile << out.str();
+	    logFile << out.str() << std::flush;
 	  }
 
 	if((logMode & LOGMODE_CUSTOM) == LOGMODE_CUSTOM)
